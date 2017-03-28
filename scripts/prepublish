@@ -14,25 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -e -v
-cd "`dirname $0`/.."
+set -e
+cd "$(dirname "$0")/.."
 
-PATH=./scripts:./node_modules/.bin:$PATH
+VERSION=$(scripts/version)
 
-SRC=src
-DIST=dist
-VERSION=`get-version`
-PREAMBLE=`sed s/VERSION_STRING/$VERSION/ $SRC/preamble.js`
-
-mkdir -p $DIST
-
-make-swf $DIST/marzipano.swf
-
-browserify \
-  --noparse=node_modules/**/*.js \
-  -s Marzipano \
-  -o $DIST/marzipano.js \
-  $SRC/index.js
-
-uglifyjs $DIST/marzipano.js -o $DIST/marzipano.js \
-  -m -c warnings=false --preamble "$PREAMBLE"
+if [[ "$VERSION" =~ "dev" ]]; then
+  echo The current version cannot be released.
+  exit 1
+fi

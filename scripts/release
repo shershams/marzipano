@@ -15,21 +15,33 @@
 # limitations under the License.
 
 set -e -v
-cd "$(dirname "$0")/.."
+cd "`dirname $0`/.."
 
 PATH=scripts:node_modules/.bin:$PATH
 
-rm -rf build
-mkdir -p build
+VERSION=$(scripts/version)
+PREAMBLE=$(sed 's/VERSION_STRING/$VERSION/' src/preamble.js)
+MANIFEST="{ \"version\": \"$VERSION\", \"file\": \"marzipano-$VERSION.zip\" }"
 
-make-swf build/marzipano.swf dev
+rm -rf dist
+mkdir -p dist
 
-watchify -v -d \
+make-swf dist/marzipano.swf "$VERSION"
+
+browserify \
   --noparse=node_modules/**/*.js \
   -s Marzipano \
-  -o build/marzipano.js \
-  src/index.js &
+  -o dist/marzipano.js \
+  src/index.js
 
-lrhs -b -w src/**/*.js,demos/**/*.js,demos/**/*.css,demos/**/*.html,build/* &
+uglifyjs dist/marzipano.js -o dist/marzipano.js \
+  -m -c warnings=false --preamble "$PREAMBLE"
 
-wait
+jsdoc -c jsdoc-conf.json
+
+cp LICENSE dist/LICENSE.txt
+
+echo "$MANIFEST" > dist/latest.json
+
+zip -j dist/marzipano-$VERSION.zip \
+  dist/marzipano.js dist/marzipano.swf dist/LICENSE.txt

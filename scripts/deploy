@@ -15,8 +15,20 @@
 # limitations under the License.
 
 set -e -v
-cd "`dirname $0`/.."
+cd "$(dirname "$0")/.."
 
-PATH=./scripts:./node_modules/.bin:$PATH
+# Deploy the Javascript and SWF files to be used by the demos.
+gsutil cp dist/marzipano.js gs://www.marzipano.net/build/marzipano.js
+gsutil cp dist/marzipano.swf gs://www.marzipano.net/build/marzipano.swf
 
-browserify test/suite/*.js test/suite/**/*.js -o test/suite.js
+# Deploy the release archive.
+gsutil cp dist/*.zip gs://www.marzipano.net/releases/
+
+# Deploy the JSON manifest.
+gsutil cp dist/latest.json gs://www.marzipano.net/releases/latest.json
+
+# Deploy the documentation.
+gsutil -m rsync -r docs gs://www.marzipano.net/reference
+
+# Deploy the demos.
+gsutil -m rsync -r demos gs://www.marzipano.net/demos
